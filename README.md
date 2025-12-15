@@ -1,30 +1,27 @@
-# BaseRunner game build
+# BaseRunner 🏃‍♂️⚡
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+BaseRunner is an on-chain endless runner game built on **Base**, combining classic pixel-style gameplay with modern Web3 mechanics.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/sirironhearts-projects/v0-base-runner-game)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/ijTrXci3bB5)
+Players run, jump, and compete for high scores that are recorded **on-chain**, creating a transparent and verifiable leaderboard.
 
-## Overview
+---
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+## 🚀 Features
 
-## Deployment
+- 🎮 Endless runner gameplay
+- ⛓️ On-chain high score tracking
+- 👛 Wallet-based player identity
+- 📱 Desktop & mobile friendly
+- ⚡ Fast, lightweight, and gas-efficient
+- 🌐 Built for Base Mainnet
 
-Your project is live at:
+---
 
-**[https://vercel.com/sirironhearts-projects/v0-base-runner-game](https://vercel.com/sirironhearts-projects/v0-base-runner-game)**
+## 🧱 Tech Stack
 
-## Build your app
-
-Continue building your app on:
-
-**[https://v0.app/chat/ijTrXci3bB5](https://v0.app/chat/ijTrXci3bB5)**
-
-## How It Works
-
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+- **Next.js** (App Router)
+- **TypeScript**
+- **Tailwind CSS**
+- **Wagmi + Viem**
+- **Ethers-compatible wallets**
+- **Vercel** for deployment
