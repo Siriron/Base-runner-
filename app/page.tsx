@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { TRexGame } from "@/components/trex-game"
+import { TRexGame } from "@/components/trex-game" // ✅ Fixed named import
 import { useAccount, useConnect, useDisconnect, useWalletClient } from "wagmi"
 import { recordScore, getBestScore } from "@/lib/contract"
 
@@ -19,7 +19,6 @@ export default function Home() {
   const { connect, connectors } = useConnect()
   const { disconnect } = useDisconnect()
 
-  // Detect mobile
   useEffect(() => {
     const isMobile =
       /iPhone|iPad|iPod|Android|Opera Mini/i.test(navigator.userAgent) ||
@@ -27,14 +26,13 @@ export default function Home() {
     setIsMobileDevice(isMobile)
   }, [])
 
-  // Load best score on wallet address change
   useEffect(() => {
     if (address) loadBestScore()
   }, [address])
 
   const handleScore = (newScore: number) => setScore(newScore)
 
-  const handleGameOver = (finalScore?: number) => {
+  const handleGameOver = () => {
     setGameActive(false)
     setGameOver(true)
   }
@@ -42,7 +40,6 @@ export default function Home() {
   const recordHighScoreOnChain = async (finalScore: number) => {
     if (!address || !walletClient) throw new Error("Wallet not connected")
     try {
-      setIsSubmitting(true)
       await recordScore(walletClient, address, finalScore)
       await loadBestScore()
       setSubmitMessage("Score submitted to blockchain!")
@@ -135,14 +132,15 @@ export default function Home() {
           <div className="bg-white/90 p-6 rounded-lg shadow-lg text-center">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">GAME OVER</h2>
             <p className="text-xl font-bold text-orange-600 mb-3">Score: {score}</p>
-            {score > bestScore && (
-              <p className="text-lg font-bold text-amber-600 mb-4">NEW HIGH SCORE!</p>
-            )}
+            {score > bestScore && <p className="text-lg font-bold text-amber-600 mb-4">NEW HIGH SCORE!</p>}
           </div>
 
           {score > bestScore && isConnected && (
             <button
-              onClick={() => recordHighScoreOnChain(score)}
+              onClick={() => {
+                setIsSubmitting(true)
+                recordHighScoreOnChain(score)
+              }}
               disabled={isSubmitting}
               className="w-full max-w-xs mx-auto py-3 px-4 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-400 text-white font-bold rounded-lg transition-all active:scale-95"
             >
@@ -150,17 +148,10 @@ export default function Home() {
             </button>
           )}
 
-          {submitMessage && (
-            <p className="text-sm text-center text-gray-700 font-semibold">
-              {submitMessage}
-            </p>
-          )}
+          {submitMessage && <p className="text-sm text-center text-gray-700 font-semibold">{submitMessage}</p>}
 
           <button
-            onClick={() => {
-              setGameOver(false)
-              setScore(0)
-            }}
+            onClick={() => { setGameOver(false); setScore(0) }}
             className="py-4 px-6 bg-orange-500 text-white font-bold rounded-lg shadow-lg"
           >
             PLAY AGAIN
