@@ -1,5 +1,6 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import "./globals.css"
+import { Providers } from "./providers"
 
 export const metadata: Metadata = {
   title: "BaseRunner – On-Chain Pixel Runner",
@@ -15,7 +16,12 @@ export const metadata: Metadata = {
     "Blockchain Gaming",
     "Pixel Game",
   ],
-  viewport: "width=device-width, initial-scale=1",
+}
+
+// ✅ FIX for Next.js 16 viewport warning
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
 }
 
 export default function RootLayout({
@@ -26,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-black text-white antialiased">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   )
