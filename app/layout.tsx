@@ -1,21 +1,34 @@
 "use client";
 
 import { ReactNode } from "react";
-import { createClient, WagmiProvider } from "wagmi";
-import { mainnet } from "viem/chains";
 import "@/styles/globals.css";
 
-// Create Wagmi client
-const wagmiClient = createClient({
+import { WagmiConfig, createConfig, mainnet, publicProvider, configureChains } from "wagmi";
+import { RainbowKitProvider, getDefaultWallets } from "@rainbow-me/rainbowkit";
+
+// 1. Configure chains
+const { chains, publicClient } = configureChains([mainnet], [publicProvider()]);
+
+// 2. Set up default wallets (RainbowKit)
+const { connectors } = getDefaultWallets({
+  appName: "Base Runner",
+  chains,
+});
+
+// 3. Create Wagmi config
+const wagmiConfig = createConfig({
   autoConnect: true,
-  chain: mainnet,
+  connectors,
+  publicClient,
 });
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <WagmiProvider client={wagmiClient}>{children}</WagmiProvider>
+        <WagmiConfig config={wagmiConfig}>
+          <RainbowKitProvider chains={chains}>{children}</RainbowKitProvider>
+        </WagmiConfig>
       </body>
     </html>
   );
