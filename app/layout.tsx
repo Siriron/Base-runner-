@@ -1,21 +1,21 @@
-// app/layout.tsx
-"use client"
+"use client";
 
-import { ReactNode } from "react"
-import { WagmiConfig, createConfig, configureChains, mainnet } from "wagmi"
-import { publicProvider } from "wagmi/providers/public"
-import "@/styles/globals.css" // your tailwind/globals
+import { ReactNode } from "react";
+import { createConfig, WagmiConfig, mainnet, configureChains, publicProvider } from "wagmi";
+import "@/styles/globals.css"; // your tailwind/globals
 
-const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [mainnet],
-  [publicProvider()]
-)
+// Define chains
+const chains = [mainnet];
 
+// Configure public client
+const { publicClient, webSocketPublicClient } = configureChains(chains, [publicProvider()]);
+
+// Create Wagmi config
 const wagmiConfig = createConfig({
   autoConnect: true,
   publicClient,
   webSocketPublicClient,
-})
+});
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -24,5 +24,5 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <WagmiConfig config={wagmiConfig}>{children}</WagmiConfig>
       </body>
     </html>
-  )
+  );
 }
