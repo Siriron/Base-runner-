@@ -1,56 +1,32 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import TRexGame from "@/components/trex-game"
+import { useState, useEffect, useCallback } from "react"
+import { TRexGame } from "@/components/trex-game"
 import { useAccount, useConnect, useDisconnect, useWalletClient } from "wagmi"
 import { recordScore, getBestScore } from "@/lib/contract"
 
-export const dynamic = "force-dynamic" // ensure fully dynamic rendering
-
 export default function Home() {
-  const [gameActive, setGameActive] = useState(false)
-  const [score, setScore] = useState(0)
-  const [bestScore, setBestScore] = useState(0)
-  const [gameOver, setGameOver] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitMessage, setSubmitMessage] = useState("")
-  const [isMobileDevice, setIsMobileDevice] = useState(true)
-
   const { address, isConnected } = useAccount()
   const { data: walletClient } = useWalletClient()
   const { connect, connectors } = useConnect()
   const { disconnect } = useDisconnect()
 
-  // Detect mobile device safely
+  const [gameActive, setGameActive] = useState(false)
+  const [gameOver, setGameOver] = useState(false)
+  const [score, setScore] = useState(0)
+  const [bestScore, setBestScore] = useState(0)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitMessage, setSubmitMessage] = useState("")
+  const [isMobileDevice, setIsMobileDevice] = useState(true)
+
+  // Detect mobile
   useEffect(() => {
-    if (typeof window === "undefined") return
-    const isMobile = /iPhone|iPad|iPod|Android|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768
-    setIsMobileDevice(isMobile)
+    const mobile = /iPhone|iPad|iPod|Android|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768
+    setIsMobileDevice(mobile)
   }, [])
 
-  // Load best score from blockchain
-  useEffect(() => {
-    if (address) loadBestScore()
-  }, [address])
-
-  const handleScore = (newScore: number) => setScore(newScore)
-  const handleGameOver = (finalScore: number) => {
-    setGameActive(false)
-    setGameOver(true)
-  }
-
-  const recordHighScoreOnChain = async (finalScore: number) => {
-    if (!address || !walletClient) throw new Error("Wallet not connected")
-    try {
-      await recordScore(walletClient, address, finalScore)
-      await loadBestScore()
-    } catch (error) {
-      console.error("Error recording high score on-chain:", error)
-      throw error
-    }
-  }
-
-  const loadBestScore = async () => {
+  // Load best score when wallet connected
+  const loadBestScore = useCallback(async () => {
     if (!address) return
     try {
       const best = await getBestScore(address)
@@ -58,12 +34,40 @@ export default function Home() {
     } catch (error) {
       console.error("Failed to load best score:", error)
     }
-  }
+  }, [address])
 
+  useEffect(() => {
+    if (address) loadBestScore()
+  }, [address, loadBestScore])
+
+  // Game handlers
+  const handleScore = useCallback((newScore: number) => setScore(newScore), [])
+  const handleGameOver = useCallback(() => {
+    setGameActive(false)
+    setGameOver(true)
+  }, [])
+
+  const recordHighScoreOnChain = useCallback(
+    async (finalScore: number) => {
+      if (!address || !walletClient) throw new Error("Wallet not connected")
+      try {
+        await recordScore(walletClient, address, finalScore)
+        await loadBestScore()
+      } catch (error) {
+        console.error("Error recording high score:", error)
+        throw error
+      }
+    },
+    [address, walletClient, loadBestScore]
+  )
+
+  // Wallet button
   const handleWalletClick = () => {
-    if (isConnected) return disconnect()
-    const injectedConnector = connectors.find((c) => c.id === "injected")
-    if (injectedConnector) connect({ connector: injectedConnector })
+    if (isConnected) disconnect()
+    else {
+      const injected = connectors.find(c => c.id === "injected")
+      if (injected) connect({ connector: injected })
+    }
   }
 
   // Desktop warning
@@ -80,7 +84,7 @@ export default function Home() {
     )
   }
 
-  // Game active state
+  // Game active
   if (gameActive) {
     return (
       <TRexGame
@@ -92,11 +96,9 @@ export default function Home() {
     )
   }
 
-  // Default home screen
+  // Main menu / post-game
   return (
     <div className="w-full h-screen bg-gradient-to-b from-[#FCE38A] to-[#F38181] flex flex-col items-center justify-center px-4 overflow-hidden touch-none">
-      
-      {/* Wallet Button */}
       <button
         onClick={handleWalletClick}
         className="fixed top-4 right-4 px-4 py-2 bg-gradient-to-r from-[#FF6B6B] to-[#FF3B3B] hover:from-[#FF5555] hover:to-[#FF2525] text-white font-bold rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 text-sm z-50"
@@ -105,14 +107,12 @@ export default function Home() {
         🔗 {isConnected ? "Connected" : "Wallet"}
       </button>
 
-      {/* Title & Instructions */}
       <div className="w-full space-y-6 text-center max-w-md mx-auto">
         <div className="space-y-3">
           <h1 className="text-5xl md:text-6xl font-bold text-gray-800">T-REX RUNNER</h1>
           <p className="text-lg md:text-xl text-gray-700">Jump • Survive • Score High</p>
         </div>
 
-        {/* Score & Best Score */}
         <div className="grid grid-cols-2 gap-3 py-6">
           <div className="bg-white/80 p-4 rounded-lg shadow">
             <div className="text-3xl font-bold text-orange-600">{score}</div>
@@ -124,7 +124,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Start Game Button */}
         {!gameActive && !gameOver && (
           <button
             onClick={() => {
@@ -139,7 +138,6 @@ export default function Home() {
           </button>
         )}
 
-        {/* Game Over UI */}
         {gameOver && (
           <div className="space-y-4 py-6">
             <div className="bg-white/90 p-6 rounded-lg shadow-lg">
