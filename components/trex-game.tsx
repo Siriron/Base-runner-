@@ -1,15 +1,14 @@
 "use client"
 
-/* 🌈 LEGENDARY POLISHED COLOR T-Rex GAME
-✔ Chrome-accurate gameplay
-✔ Beautiful gradients, parallax mountains/clouds/stars
-✔ Smooth day/night transitions
-✔ Jump/score/collision sounds + ambient wind/crickets
-✔ Particle effects
-✔ Mobile & keyboard input
-✔ On-chain high score recording */
+/* 🌈 Optimized T-Rex Game for Next.js 13+
+✔ Fully client-side
+✔ Smooth gameplay & visuals preserved
+✔ Audio works only on user gesture
+✔ Minimal re-renders for performance
+✔ SSR-safe
+*/
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 
 export interface TRexGameProps {
   highScore: number
@@ -18,21 +17,32 @@ export interface TRexGameProps {
   recordHighScoreOnChain: (score: number) => Promise<void>
 }
 
-export default function TRexGame({
+export function TRexGame({
   highScore,
   onScore,
   onGameOver,
   recordHighScoreOnChain,
 }: TRexGameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [gameKey, setGameKey] = useState(0)
-  const [gameOver, setGameOver] = useState(false)
-  const [score, setScore] = useState(0)
 
+  // Game state refs to avoid re-rendering every frame
+  const rexRef = useRef({ x: 90, y: 0, w: 52, h: 56, vy: 0, jumping: false })
+  const obstaclesRef = useRef<any[]>([])
+  const particlesRef = useRef<any[]>([])
+  const cloudsRef = useRef<any[]>([])
+  const starsRef = useRef<any[]>([])
+  const mountainsRef = useRef<any[]>([])
+  const scoreRef = useRef(0)
+  const runningRef = useRef(true)
+  const submittedRef = useRef(false)
   const audioUnlocked = useRef(false)
   const sounds = useRef<Record<string, HTMLAudioElement>>({})
 
-  const unlockAudio = () => {
+  const [gameOver, setGameOver] = useState(false)
+  const [gameKey, setGameKey] = useState(0)
+
+  // Unlock audio on first interaction
+  const unlockAudio = useCallback(() => {
     if (audioUnlocked.current) return
     audioUnlocked.current = true
 
@@ -50,13 +60,14 @@ export default function TRexGame({
       day: make("https://www.soundjay.com/nature/sounds/desert-wind-1.mp3", true, 0.07),
       night: make("https://www.soundjay.com/nature/sounds/crickets-1.mp3", true, 0.07),
     }
-  }
+  }, [])
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext("2d")!
-
+    
+    // Canvas resize
     const resize = () => {
       canvas.width = window.innerWidth
       canvas.height = window.innerHeight
@@ -70,49 +81,47 @@ export default function TRexGame({
     const JUMP_FORCE = -15
     const BASE_SPEED = 6
 
-    /* ================= STATE ================= */
-    let rex = { x: 90, y: GROUND_Y, w: 52, h: 56, vy: 0, jumping: false }
-    let obstacles: any[] = []
-    let particles: any[] = []
-    let clouds: any[] = []
-    let stars: any[] = []
-    let mountains: any[] = []
+    // Initialize rex
+    rexRef.current.y = GROUND_Y
 
+    // Initialize mountains
     for (let i = 0; i < 5; i++) {
-      mountains.push({ x: i * 300, h: 100 + Math.random() * 50 })
+      mountainsRef.current.push({ x: i * 300, h: 100 + Math.random() * 50 })
     }
-    for (let i = 0; i < 60; i++) stars.push({ x: Math.random() * canvas.width, y: Math.random() * 200, r: Math.random() * 2 + 1 }))
+
+    // Initialize stars
+    for (let i = 0; i < 60; i++) {
+      starsRef.current.push({ x: Math.random() * canvas.width, y: Math.random() * 200, r: Math.random() * 2 + 1 })
+    }
 
     let frame = 0
     let speed = BASE_SPEED
-    let running = true
     let lastCycle: "day" | "night" | null = null
-    let submitted = false
 
     /* ================= HELPERS ================= */
     const spawnCloud = () => {
-      clouds.push({ x: canvas.width, y: Math.random() * 200 + 40, w: 120, h: 40 })
+      cloudsRef.current.push({ x: canvas.width, y: Math.random() * 200 + 40, w: 120, h: 40 })
     }
 
     const spawnDust = (x: number, y: number) => {
       for (let i = 0; i < 8; i++) {
-        particles.push({ x, y, vx: Math.random() * 2 - 1, vy: Math.random() * -2, life: 25 })
+        particlesRef.current.push({ x, y, vx: Math.random() * 2 - 1, vy: Math.random() * -2, life: 25 })
       }
     }
 
     const spawnObstacle = () => {
       const r = Math.random()
-      if (r < 0.6) obstacles.push({ type: "cactus", x: canvas.width, y: GROUND_Y - 55, w: 26, h: 55 })
-      else if (r < 0.85) obstacles.push({ type: "cactus", x: canvas.width, y: GROUND_Y - 75, w: 26, h: 75 })
-      else obstacles.push({ type: "bird", x: canvas.width, y: GROUND_Y - 100, w: 50, h: 34, flap: 0 })
+      if (r < 0.6) obstaclesRef.current.push({ type: "cactus", x: canvas.width, y: GROUND_Y - 55, w: 26, h: 55 })
+      else if (r < 0.85) obstaclesRef.current.push({ type: "cactus", x: canvas.width, y: GROUND_Y - 75, w: 26, h: 75 })
+      else obstaclesRef.current.push({ type: "bird", x: canvas.width, y: GROUND_Y - 100, w: 50, h: 34, flap: 0 })
     }
 
     const jump = () => {
-      if (!rex.jumping && running) {
-        rex.vy = JUMP_FORCE
-        rex.jumping = true
+      if (!rexRef.current.jumping && runningRef.current) {
+        rexRef.current.vy = JUMP_FORCE
+        rexRef.current.jumping = true
         sounds.current.jump?.play()
-        spawnDust(rex.x + rex.w / 2, rex.y + rex.h)
+        spawnDust(rexRef.current.x + rexRef.current.w / 2, rexRef.current.y + rexRef.current.h)
       }
     }
 
@@ -130,7 +139,7 @@ export default function TRexGame({
 
     /* ================= GAME LOOP ================= */
     const loop = () => {
-      if (!running) return
+      if (!runningRef.current) return
       frame++
 
       /* ===== DAY / NIGHT ===== */
@@ -157,11 +166,11 @@ export default function TRexGame({
       /* ===== STARS ===== */
       if (cycle === "night") {
         ctx.fillStyle = "#FFF"
-        stars.forEach(s => ctx.fillRect(s.x, s.y, s.r, s.r))
+        starsRef.current.forEach(s => ctx.fillRect(s.x, s.y, s.r, s.r))
       }
 
       /* ===== MOUNTAINS (PARALLAX) ===== */
-      mountains.forEach(m => {
+      mountainsRef.current.forEach(m => {
         ctx.fillStyle = cycle === "day" ? "rgba(217,176,140,0.5)" : "rgba(50,50,80,0.5)"
         ctx.beginPath()
         ctx.moveTo(m.x, GROUND_Y)
@@ -175,40 +184,40 @@ export default function TRexGame({
       /* ===== CLOUDS ===== */
       if (cycle === "day" && frame % 200 === 0) spawnCloud()
       ctx.fillStyle = "rgba(255,255,255,0.8)"
-      clouds.forEach((c, i) => {
+      cloudsRef.current.forEach((c, i) => {
         c.x -= speed * 0.2
         ctx.beginPath()
         ctx.ellipse(c.x, c.y, c.w / 2, c.h / 2, 0, 0, Math.PI * 2)
         ctx.fill()
-        if (c.x + c.w < 0) clouds.splice(i, 1)
+        if (c.x + c.w < 0) cloudsRef.current.splice(i, 1)
       })
 
       /* ===== GROUND ===== */
       ctx.fillStyle = cycle === "day" ? "#E6C27A" : "#3A2E2A"
-      ctx.fillRect(0, GROUND_Y + rex.h, canvas.width, canvas.height)
+      ctx.fillRect(0, GROUND_Y + rexRef.current.h, canvas.width, canvas.height)
 
       /* ===== REX PHYSICS ===== */
-      rex.vy += GRAVITY
-      rex.y += rex.vy
-      if (rex.y >= GROUND_Y) {
-        if (rex.jumping) spawnDust(rex.x + rex.w / 2, rex.y + rex.h)
-        rex.y = GROUND_Y
-        rex.vy = 0
-        rex.jumping = false
+      rexRef.current.vy += GRAVITY
+      rexRef.current.y += rexRef.current.vy
+      if (rexRef.current.y >= GROUND_Y) {
+        if (rexRef.current.jumping) spawnDust(rexRef.current.x + rexRef.current.w / 2, rexRef.current.y + rexRef.current.h)
+        rexRef.current.y = GROUND_Y
+        rexRef.current.vy = 0
+        rexRef.current.jumping = false
       }
 
       /* ===== DRAW REX ===== */
-      const rexGrad = ctx.createLinearGradient(rex.x, rex.y, rex.x, rex.y + rex.h)
+      const rexGrad = ctx.createLinearGradient(rexRef.current.x, rexRef.current.y, rexRef.current.x, rexRef.current.y + rexRef.current.h)
       rexGrad.addColorStop(0, "#FFB703")
       rexGrad.addColorStop(1, "#FB8500")
       ctx.fillStyle = rexGrad
-      ctx.fillRect(rex.x, rex.y, rex.w, rex.h)
+      ctx.fillRect(rexRef.current.x, rexRef.current.y, rexRef.current.w, rexRef.current.h)
       ctx.fillStyle = "#000"
-      ctx.fillRect(rex.x + 36, rex.y + 16, 6, 6)
+      ctx.fillRect(rexRef.current.x + 36, rexRef.current.y + 16, 6, 6)
 
       /* ===== OBSTACLES ===== */
       if (frame % 90 === 0) spawnObstacle()
-      obstacles.forEach((o, i) => {
+      obstaclesRef.current.forEach((o, i) => {
         o.x -= speed
         if (o.type === "cactus") {
           const g = ctx.createLinearGradient(o.x, o.y, o.x, o.y + o.h)
@@ -222,48 +231,43 @@ export default function TRexGame({
           ctx.fillRect(o.x, o.y, o.w, o.h)
         }
 
-        if (
-          rex.x < o.x + o.w &&
-          rex.x + rex.w > o.x &&
-          rex.y < o.y + o.h &&
-          rex.y + rex.h > o.y
-        ) {
-          running = false
+        // Collision
+        const rex = rexRef.current
+        if (rex.x < o.x + o.w && rex.x + rex.w > o.x && rex.y < o.y + o.h && rex.y + rex.h > o.y) {
+          runningRef.current = false
           setGameOver(true)
           sounds.current.hit?.play()
-          onGameOver(score)
+          onGameOver(scoreRef.current)
 
-          if (!submitted && score > highScore) {
-            submitted = true
-            recordHighScoreOnChain(score).catch(() => {})
+          if (!submittedRef.current && scoreRef.current > highScore) {
+            submittedRef.current = true
+            recordHighScoreOnChain(scoreRef.current).catch(() => {})
           }
         }
 
+        // Passed obstacle
         if (o.x + o.w < 0) {
-          obstacles.splice(i, 1)
-          setScore(s => {
-            const ns = s + 1
-            onScore(ns)
-            sounds.current.score?.play()
-            return ns
-          })
+          obstaclesRef.current.splice(i, 1)
+          scoreRef.current++
+          onScore(scoreRef.current)
+          sounds.current.score?.play()
         }
       })
 
       /* ===== PARTICLES ===== */
-      particles.forEach((p, i) => {
+      particlesRef.current.forEach((p, i) => {
         p.x += p.vx
         p.y += p.vy
         p.life--
         ctx.fillStyle = "rgba(244,162,97,0.8)"
         ctx.fillRect(p.x, p.y, 4, 4)
-        if (p.life <= 0) particles.splice(i, 1)
+        if (p.life <= 0) particlesRef.current.splice(i, 1)
       })
 
       /* ===== SCORE ===== */
       ctx.font = "bold 44px monospace"
       ctx.fillStyle = cycle === "day" ? "#333" : "#EEE"
-      ctx.fillText(score.toString().padStart(6, "0"), canvas.width - 240, 64)
+      ctx.fillText(scoreRef.current.toString().padStart(6, "0"), canvas.width - 240, 64)
 
       speed += 0.001
       requestAnimationFrame(loop)
@@ -277,7 +281,7 @@ export default function TRexGame({
       sounds.current.day?.pause()
       sounds.current.night?.pause()
     }
-  }, [gameKey, highScore, onGameOver, onScore, recordHighScoreOnChain])
+  }, [gameKey, highScore, onGameOver, onScore, recordHighScoreOnChain, unlockAudio])
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
@@ -287,15 +291,18 @@ export default function TRexGame({
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20">
           <div className="bg-white rounded-2xl p-8 text-center space-y-4 shadow-2xl">
             <h2 className="text-4xl font-bold">GAME OVER</h2>
-            <p className="text-2xl">Score: {score}</p>
-            {score > highScore && (
+            <p className="text-2xl">Score: {scoreRef.current}</p>
+            {scoreRef.current > highScore && (
               <p className="text-green-600 font-bold">🏆 New High Score Saved On‑Chain</p>
             )}
             <button
               className="bg-gradient-to-r from-orange-400 to-pink-500 hover:scale-105 transition text-white px-8 py-4 rounded-xl font-bold"
               onClick={() => {
-                setScore(0)
+                scoreRef.current = 0
                 setGameOver(false)
+                obstaclesRef.current = []
+                particlesRef.current = []
+                cloudsRef.current = []
                 setGameKey(k => k + 1)
               }}
             >
@@ -306,4 +313,4 @@ export default function TRexGame({
       )}
     </div>
   )
-          }
+                  }
