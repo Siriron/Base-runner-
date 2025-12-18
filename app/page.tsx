@@ -1,9 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { TRexGame } from "@/components/trex-game"
+import TRexGame from "@/components/trex-game"
 import { useAccount, useConnect, useDisconnect, useWalletClient } from "wagmi"
 import { recordScore, getBestScore } from "@/lib/contract"
+
+export const dynamic = "force-dynamic" // ensure fully dynamic rendering
 
 export default function Home() {
   const [gameActive, setGameActive] = useState(false)
@@ -19,30 +21,26 @@ export default function Home() {
   const { connect, connectors } = useConnect()
   const { disconnect } = useDisconnect()
 
+  // Detect mobile device safely
   useEffect(() => {
+    if (typeof window === "undefined") return
     const isMobile = /iPhone|iPad|iPod|Android|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768
     setIsMobileDevice(isMobile)
   }, [])
 
+  // Load best score from blockchain
   useEffect(() => {
-    if (address) {
-      loadBestScore()
-    }
+    if (address) loadBestScore()
   }, [address])
 
-  const handleScore = (newScore: number) => {
-    setScore(newScore)
-  }
-
+  const handleScore = (newScore: number) => setScore(newScore)
   const handleGameOver = (finalScore: number) => {
     setGameActive(false)
     setGameOver(true)
   }
 
   const recordHighScoreOnChain = async (finalScore: number) => {
-    if (!address || !walletClient) {
-      throw new Error("Wallet not connected")
-    }
+    if (!address || !walletClient) throw new Error("Wallet not connected")
     try {
       await recordScore(walletClient, address, finalScore)
       await loadBestScore()
@@ -63,16 +61,12 @@ export default function Home() {
   }
 
   const handleWalletClick = () => {
-    if (isConnected) {
-      disconnect()
-    } else {
-      const injectedConnector = connectors.find((c) => c.id === "injected")
-      if (injectedConnector) {
-        connect({ connector: injectedConnector })
-      }
-    }
+    if (isConnected) return disconnect()
+    const injectedConnector = connectors.find((c) => c.id === "injected")
+    if (injectedConnector) connect({ connector: injectedConnector })
   }
 
+  // Desktop warning
   if (!isMobileDevice && typeof window !== "undefined") {
     return (
       <div className="w-full h-screen bg-gradient-to-b from-[#FCE38A] to-[#F38181] flex items-center justify-center px-4">
@@ -86,6 +80,7 @@ export default function Home() {
     )
   }
 
+  // Game active state
   if (gameActive) {
     return (
       <TRexGame
@@ -97,8 +92,11 @@ export default function Home() {
     )
   }
 
+  // Default home screen
   return (
     <div className="w-full h-screen bg-gradient-to-b from-[#FCE38A] to-[#F38181] flex flex-col items-center justify-center px-4 overflow-hidden touch-none">
+      
+      {/* Wallet Button */}
       <button
         onClick={handleWalletClick}
         className="fixed top-4 right-4 px-4 py-2 bg-gradient-to-r from-[#FF6B6B] to-[#FF3B3B] hover:from-[#FF5555] hover:to-[#FF2525] text-white font-bold rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 text-sm z-50"
@@ -107,12 +105,14 @@ export default function Home() {
         🔗 {isConnected ? "Connected" : "Wallet"}
       </button>
 
+      {/* Title & Instructions */}
       <div className="w-full space-y-6 text-center max-w-md mx-auto">
         <div className="space-y-3">
           <h1 className="text-5xl md:text-6xl font-bold text-gray-800">T-REX RUNNER</h1>
           <p className="text-lg md:text-xl text-gray-700">Jump • Survive • Score High</p>
         </div>
 
+        {/* Score & Best Score */}
         <div className="grid grid-cols-2 gap-3 py-6">
           <div className="bg-white/80 p-4 rounded-lg shadow">
             <div className="text-3xl font-bold text-orange-600">{score}</div>
@@ -124,6 +124,7 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Start Game Button */}
         {!gameActive && !gameOver && (
           <button
             onClick={() => {
@@ -138,6 +139,7 @@ export default function Home() {
           </button>
         )}
 
+        {/* Game Over UI */}
         {gameOver && (
           <div className="space-y-4 py-6">
             <div className="bg-white/90 p-6 rounded-lg shadow-lg">
@@ -153,7 +155,7 @@ export default function Home() {
                   try {
                     await recordHighScoreOnChain(score)
                     setSubmitMessage("Score submitted to blockchain!")
-                  } catch (error) {
+                  } catch {
                     setSubmitMessage("Failed to submit. Try again.")
                   } finally {
                     setIsSubmitting(false)
