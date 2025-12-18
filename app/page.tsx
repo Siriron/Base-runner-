@@ -31,6 +31,7 @@ export default function Home() {
   }, [address]);
 
   const handleScore = (newScore: number) => setScore(newScore);
+
   const handleGameOver = () => {
     setGameActive(false);
     setGameOver(true);
@@ -101,7 +102,6 @@ export default function Home() {
       </button>
 
       <h1 className="text-5xl font-bold text-gray-800 mb-6">T-REX RUNNER</h1>
-
       <div className="grid grid-cols-2 gap-3 mb-6">
         <div className="bg-white/80 p-4 rounded-lg shadow">
           <div className="text-3xl font-bold text-orange-600">{score}</div>
@@ -151,7 +151,10 @@ export default function Home() {
           {submitMessage && <p className="text-sm text-center text-gray-700 font-semibold">{submitMessage}</p>}
 
           <button
-            onClick={() => { setGameOver(false); setScore(0); }}
+            onClick={() => {
+              setGameOver(false);
+              setScore(0);
+            }}
             className="py-4 px-6 bg-orange-500 text-white font-bold rounded-lg shadow-lg"
           >
             PLAY AGAIN
@@ -160,4 +163,4 @@ export default function Home() {
       )}
     </div>
   );
-          }
+}
