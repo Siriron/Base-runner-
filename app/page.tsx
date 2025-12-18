@@ -1,69 +1,68 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { TRexGame } from "@/components/trex-game" // ✅ Fixed named import
-import { useAccount, useConnect, useDisconnect, useWalletClient } from "wagmi"
-import { recordScore, getBestScore } from "@/lib/contract"
+import { useState, useEffect } from "react";
+import { TRexGame } from "@/components/trex-game";
+import { useAccount, useConnect, useDisconnect, useWalletClient } from "wagmi";
+import { recordScore, getBestScore } from "@/lib/contract";
 
 export default function Home() {
-  const [gameActive, setGameActive] = useState(false)
-  const [score, setScore] = useState(0)
-  const [bestScore, setBestScore] = useState(0)
-  const [gameOver, setGameOver] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitMessage, setSubmitMessage] = useState("")
-  const [isMobileDevice, setIsMobileDevice] = useState(true)
+  const [gameActive, setGameActive] = useState(false);
+  const [score, setScore] = useState(0);
+  const [bestScore, setBestScore] = useState(0);
+  const [gameOver, setGameOver] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState("");
+  const [isMobileDevice, setIsMobileDevice] = useState(true);
 
-  const { address, isConnected } = useAccount()
-  const { data: walletClient } = useWalletClient()
-  const { connect, connectors } = useConnect()
-  const { disconnect } = useDisconnect()
+  const { address, isConnected } = useAccount();
+  const { data: walletClient } = useWalletClient();
+  const { connect, connectors } = useConnect();
+  const { disconnect } = useDisconnect();
 
   useEffect(() => {
     const isMobile =
       /iPhone|iPad|iPod|Android|Opera Mini/i.test(navigator.userAgent) ||
-      window.innerWidth < 768
-    setIsMobileDevice(isMobile)
-  }, [])
+      window.innerWidth < 768;
+    setIsMobileDevice(isMobile);
+  }, []);
 
   useEffect(() => {
-    if (address) loadBestScore()
-  }, [address])
+    if (address) loadBestScore();
+  }, [address]);
 
-  const handleScore = (newScore: number) => setScore(newScore)
-
+  const handleScore = (newScore: number) => setScore(newScore);
   const handleGameOver = () => {
-    setGameActive(false)
-    setGameOver(true)
-  }
+    setGameActive(false);
+    setGameOver(true);
+  };
 
   const recordHighScoreOnChain = async (finalScore: number) => {
-    if (!address || !walletClient) throw new Error("Wallet not connected")
+    if (!address || !walletClient) throw new Error("Wallet not connected");
     try {
-      await recordScore(walletClient, address, finalScore)
-      await loadBestScore()
-      setSubmitMessage("Score submitted to blockchain!")
+      await recordScore(walletClient, address, finalScore);
+      await loadBestScore();
+      setSubmitMessage("Score submitted to blockchain!");
     } catch (error) {
-      console.error(error)
-      setSubmitMessage("Failed to submit. Try again.")
+      console.error(error);
+      setSubmitMessage("Failed to submit. Try again.");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const loadBestScore = async () => {
-    if (!address) return
-    const best = await getBestScore(address)
-    setBestScore(best)
-  }
+    if (!address) return;
+    const best = await getBestScore(address);
+    setBestScore(best);
+  };
 
   const handleWalletClick = () => {
-    if (isConnected) disconnect()
+    if (isConnected) disconnect();
     else {
-      const injectedConnector = connectors.find(c => c.id === "injected")
-      if (injectedConnector) connect({ connector: injectedConnector })
+      const injectedConnector = connectors.find(c => c.id === "injected");
+      if (injectedConnector) connect({ connector: injectedConnector });
     }
-  }
+  };
 
   // Desktop warning
   if (!isMobileDevice) {
@@ -76,7 +75,7 @@ export default function Home() {
           </p>
         </div>
       </div>
-    )
+    );
   }
 
   // Render game
@@ -88,7 +87,7 @@ export default function Home() {
         onGameOver={handleGameOver}
         recordHighScoreOnChain={recordHighScoreOnChain}
       />
-    )
+    );
   }
 
   // Menu / start game
@@ -102,6 +101,7 @@ export default function Home() {
       </button>
 
       <h1 className="text-5xl font-bold text-gray-800 mb-6">T-REX RUNNER</h1>
+
       <div className="grid grid-cols-2 gap-3 mb-6">
         <div className="bg-white/80 p-4 rounded-lg shadow">
           <div className="text-3xl font-bold text-orange-600">{score}</div>
@@ -116,10 +116,10 @@ export default function Home() {
       {!gameOver && (
         <button
           onClick={() => {
-            setScore(0)
-            setGameActive(true)
-            setGameOver(false)
-            setSubmitMessage("")
+            setScore(0);
+            setGameActive(true);
+            setGameOver(false);
+            setSubmitMessage("");
           }}
           className="py-4 px-6 bg-orange-500 text-white font-bold rounded-lg shadow-lg mb-4"
         >
@@ -138,8 +138,8 @@ export default function Home() {
           {score > bestScore && isConnected && (
             <button
               onClick={() => {
-                setIsSubmitting(true)
-                recordHighScoreOnChain(score)
+                setIsSubmitting(true);
+                recordHighScoreOnChain(score);
               }}
               disabled={isSubmitting}
               className="w-full max-w-xs mx-auto py-3 px-4 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-400 text-white font-bold rounded-lg transition-all active:scale-95"
@@ -151,7 +151,7 @@ export default function Home() {
           {submitMessage && <p className="text-sm text-center text-gray-700 font-semibold">{submitMessage}</p>}
 
           <button
-            onClick={() => { setGameOver(false); setScore(0) }}
+            onClick={() => { setGameOver(false); setScore(0); }}
             className="py-4 px-6 bg-orange-500 text-white font-bold rounded-lg shadow-lg"
           >
             PLAY AGAIN
@@ -159,5 +159,5 @@ export default function Home() {
         </div>
       )}
     </div>
-  )
-}
+  );
+          }
