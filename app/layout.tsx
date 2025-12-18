@@ -3,7 +3,11 @@
 import { ReactNode } from "react";
 import "@/styles/globals.css";
 
-import { WagmiConfig, createConfig, mainnet, publicProvider, configureChains } from "wagmi";
+// Fixed imports for wagmi v2
+import { WagmiConfig, createConfig, configureChains } from "wagmi";
+import { mainnet } from "wagmi/chains";
+import { publicProvider } from "wagmi/providers/public";
+
 import { RainbowKitProvider, getDefaultWallets } from "@rainbow-me/rainbowkit";
 
 // 1. Configure chains
