@@ -3,25 +3,30 @@
 import { ReactNode } from "react";
 import "@/styles/globals.css";
 
-// Wagmi v2 imports
-import { WagmiConfig, createConfig, configureChains } from "wagmi";
+import { WagmiConfig, createConfig } from "wagmi";
 import { mainnet } from "wagmi/chains";
-import { publicProvider } from "viem/providers/public"; // ✅ fixed
 
-import { RainbowKitProvider, getDefaultWallets } from "@rainbow-me/rainbowkit";
+import { createPublicClient, http } from "viem";
 
-// 1. Configure chains
-const { chains, publicClient } = configureChains([mainnet], [publicProvider()]);
+import {
+  RainbowKitProvider,
+  getDefaultWallets,
+} from "@rainbow-me/rainbowkit";
 
-// 2. Set up default wallets (RainbowKit)
-const { connectors } = getDefaultWallets({
-  appName: "Base Runner",
-  chains,
+// 1. Create viem public client
+const publicClient = createPublicClient({
+  chain: mainnet,
+  transport: http(),
 });
 
-// 3. Create Wagmi config
+// 2. Wallet connectors
+const { connectors } = getDefaultWallets({
+  appName: "Base Runner",
+  chains: [mainnet],
+});
+
+// 3. Wagmi config (v2 style)
 const wagmiConfig = createConfig({
-  autoConnect: true,
   connectors,
   publicClient,
 });
@@ -31,7 +36,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body>
         <WagmiConfig config={wagmiConfig}>
-          <RainbowKitProvider chains={chains}>{children}</RainbowKitProvider>
+          <RainbowKitProvider chains={[mainnet]}>
+            {children}
+          </RainbowKitProvider>
         </WagmiConfig>
       </body>
     </html>
