@@ -5,7 +5,6 @@ import "@/styles/globals.css";
 
 import { WagmiConfig, createConfig } from "wagmi";
 import { mainnet } from "wagmi/chains";
-
 import { createPublicClient, http } from "viem";
 
 import {
@@ -13,19 +12,19 @@ import {
   getDefaultWallets,
 } from "@rainbow-me/rainbowkit";
 
-// 1. Create viem public client
+// Create viem public client (REQUIRED)
 const publicClient = createPublicClient({
   chain: mainnet,
   transport: http(),
 });
 
-// 2. Wallet connectors
+// Wallet connectors
 const { connectors } = getDefaultWallets({
   appName: "Base Runner",
   chains: [mainnet],
 });
 
-// 3. Wagmi config (v2 style)
+// Wagmi v2 config
 const wagmiConfig = createConfig({
   connectors,
   publicClient,
