@@ -12,7 +12,7 @@ Players run, jump, and compete for high scores that are recorded **on-chain**, c
 - ⛓️ On-chain high score tracking
 - 👛 Wallet-based player identity
 - 📱 Desktop & mobile friendly
-- ⚡ Fast, lightweight, and gas-efficient
+- ⚡ Fast, lightweight, gas efficient
 - 🌐 Built for Base Mainnet
 
 ---
