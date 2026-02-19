@@ -24,4 +24,3 @@ Players run, jump, and compete for high scores that are recorded **on-chain**, c
 - **Tailwind CSS**
 - **Wagmi + Viem**
 - **Ethers-compatible wallets**
-- **Vercel** for deployment
